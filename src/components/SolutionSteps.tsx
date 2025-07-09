@@ -93,26 +93,46 @@ export const SolutionSteps = ({ steps }: SolutionStepsProps) => {
       {isPlaying && currentMove && faceInfo && (
         <Card className="border-blue-500 bg-blue-500/10 animate-pulse">
           <CardContent className="p-6">
-            <div className="flex items-center justify-center space-x-6">
+            <div className="flex items-center justify-center space-x-8">
+              {/* Cube Face Visualization */}
               <div className="text-center">
-                <div className={`w-24 h-24 rounded-lg ${faceInfo.color} flex items-center justify-center mb-3 shadow-lg animate-bounce`}>
-                  <Square className="text-white" size={32} />
+                <h3 className="text-lg font-bold text-white mb-4">Turn the {faceInfo.name} Face</h3>
+                <div className="relative">
+                  {/* Highlighted Face with Animation */}
+                  <div className="w-32 h-32 mx-auto relative">
+                    <div className={`w-full h-full rounded-lg ${faceInfo.color} flex items-center justify-center shadow-2xl transform transition-transform duration-1000 ${isWaiting ? 'scale-110 rotate-90' : 'scale-100 rotate-0'} ring-4 ring-yellow-400 ring-opacity-75`}>
+                      <RotateCw className="text-white animate-spin" size={32} />
+                    </div>
+                    {/* Direction Arrow */}
+                    <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
+                      <ChevronRight className="text-yellow-400 animate-pulse" size={24} />
+                    </div>
+                  </div>
+                  <p className="text-slate-300 text-sm mt-3">
+                    {currentMove.move.includes("'") ? "Counterclockwise" : "Clockwise"} rotation
+                  </p>
                 </div>
-                <h3 className="text-lg font-bold text-white">{faceInfo.name} Face</h3>
               </div>
-              <div className="text-center">
-                <ChevronRight className="text-blue-400 mb-2" size={32} />
-                <code className="px-4 py-2 bg-slate-800 rounded text-yellow-400 font-mono text-xl font-bold">
+
+              {/* Instruction Panel */}
+              <div className="text-center bg-slate-800/50 p-6 rounded-lg border border-slate-600">
+                <h4 className="text-white font-semibold mb-2">Current Move</h4>
+                <code className="px-4 py-2 bg-slate-900 rounded text-yellow-400 font-mono text-2xl font-bold block mb-3">
                   {currentMove.move}
                 </code>
-                <p className="text-slate-300 mt-2 text-sm">{currentMove.description}</p>
+                <p className="text-slate-300 text-sm mb-4">{currentMove.description}</p>
+                <div className="flex items-center justify-center space-x-2 text-blue-400">
+                  <div className={`w-4 h-4 rounded ${faceInfo.color}`}></div>
+                  <span className="text-sm font-medium">{faceInfo.name} Face</span>
+                </div>
               </div>
             </div>
+            
             {isWaiting && (
-              <div className="mt-4 text-center">
+              <div className="mt-6 text-center">
                 <div className="inline-flex items-center space-x-2 text-blue-400">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm">Waiting 2 seconds...</span>
+                  <span className="text-sm">Waiting 2 seconds before next move...</span>
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                 </div>
               </div>
