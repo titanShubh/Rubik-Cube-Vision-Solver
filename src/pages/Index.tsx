@@ -13,7 +13,7 @@ type AppState = 'capture' | 'analyze' | 'solve' | 'complete';
 
 const Index = () => {
   const [currentState, setCurrentState] = useState<AppState>('capture');
-  const [capturedSides, setCapturedSides] = useState<string[]>([]);
+  const [capturedSides, setCapturedSides] = useState<string[]>(Array(6).fill(''));
   const [cubeState, setCubeState] = useState<string[][][]>([]);
   const [solutionSteps, setSolutionSteps] = useState<any[]>([]);
 
@@ -60,7 +60,7 @@ const Index = () => {
 
   const resetSolver = () => {
     setCurrentState('capture');
-    setCapturedSides([]);
+    setCapturedSides(Array(6).fill(''));
     setCubeState([]);
     setSolutionSteps([]);
     toast("Solver reset. Start with a new cube!");
