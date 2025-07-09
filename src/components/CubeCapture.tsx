@@ -73,7 +73,7 @@ export const CubeCapture = ({ onSideCapture, capturedSides }: CubeCaptureProps) 
                 ) : (
                   <>
                     <div className={`w-16 h-16 rounded-lg ${side.color} flex items-center justify-center`}>
-                      <Camera className="text-white" size={24} />
+                      <Camera className={`${side.color === 'bg-white' ? 'text-slate-800' : 'text-white'}`} size={24} />
                     </div>
                     <Badge variant="outline" className="border-slate-600 text-slate-400">
                       Click to capture
