@@ -9,9 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, RotateCcw, Play, Zap, Brain, Search, TreePine } from 'lucide-react';
 import { CubeViewer } from '@/components/CubeViewer';
 import { SolutionSteps } from '@/components/SolutionSteps';
-import { solveWithIDA, solveWithBFS, solveWithDFS, generateScrambledCube, SolverProgress } from '@/lib/solvers';
+import { solveWithIDA, solveWithBFS, solveWithDFS, generateScrambledCube, SolverProgress, solveWithKociemba } from '@/lib/solvers';
 import { CubeState, Move } from '@/lib/cube';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Cpu } from 'lucide-react';
 
 interface SolutionStep {
   move: string;
@@ -19,15 +20,22 @@ interface SolutionStep {
 }
 
 type AppState = 'capture' | 'analyze' | 'solve' | 'complete';
-type SolverType = 'ida' | 'bfs' | 'dfs';
+type SolverType = 'ida' | 'bfs' | 'dfs' | 'kociemba';
+
+interface KociembaProgress {
+  currentPhase: number;
+  currentDepth: number;
+  nodesExplored: number;
+  timeElapsed: number;
+}
 
 export default function Index() {
   const [currentState, setCurrentState] = useState<AppState>('capture');
   const [capturedSides, setCapturedSides] = useState<string[]>(Array(6).fill(''));
   const [cubeState, setCubeState] = useState<CubeState>([]);
   const [solutionSteps, setSolutionSteps] = useState<SolutionStep[]>([]);
-  const [selectedSolver, setSelectedSolver] = useState<SolverType>('ida');
-  const [solverProgress, setSolverProgress] = useState<SolverProgress | null>(null);
+  const [selectedSolver, setSelectedSolver] = useState<SolverType>('kociemba');
+  const [solverProgress, setSolverProgress] = useState<SolverProgress | KociembaProgress | null>(null);
   const [isGeneratingTestCube, setIsGeneratingTestCube] = useState(false);
 
   const handleSideCapture = (sideImage: string, sideIndex: number) => {
@@ -78,7 +86,7 @@ export default function Index() {
     setSolverProgress(null);
     toast(`Starting ${selectedSolver.toUpperCase()} solver...`);
 
-    const onProgress = (progress: SolverProgress) => {
+    const onProgress = (progress: SolverProgress | KociembaProgress) => {
       setSolverProgress(progress);
     };
 
@@ -92,7 +100,10 @@ export default function Index() {
           result = await solveWithBFS(cubeState, 8, onProgress);
           break;
         case 'dfs':
-          result = await solveWithDFS(cubeState, 12, onProgress);
+          result = await solveWithDFS(cubeState, 12, onProgress as (progress: SolverProgress) => void);
+          break;
+        case 'kociemba':
+          result = await solveWithKociemba(cubeState, 24, onProgress as (progress: KociembaProgress) => void);
           break;
       }
 
@@ -247,6 +258,12 @@ export default function Index() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="kociemba">
+                          <div className="flex items-center gap-2">
+                            <Cpu size={16} />
+                            Kociemba (Two-Phase)
+                          </div>
+                        </SelectItem>
                         <SelectItem value="ida">
                           <div className="flex items-center gap-2">
                             <Brain size={16} />
@@ -273,9 +290,20 @@ export default function Index() {
                     <div className="space-y-2 p-3 bg-muted rounded-lg">
                       <div className="text-sm font-medium">Solving Progress</div>
                       <div className="text-xs text-muted-foreground">
-                        Depth: {solverProgress.currentDepth} | 
-                        Nodes: {solverProgress.nodesExplored.toLocaleString()} | 
-                        Time: {(solverProgress.timeElapsed / 1000).toFixed(1)}s
+                        {('currentPhase' in solverProgress) ? (
+                          <>
+                            Phase: {solverProgress.currentPhase}/2 | 
+                            Depth: {solverProgress.currentDepth} | 
+                            Nodes: {solverProgress.nodesExplored.toLocaleString()} | 
+                            Time: {(solverProgress.timeElapsed / 1000).toFixed(1)}s
+                          </>
+                        ) : (
+                          <>
+                            Depth: {solverProgress.currentDepth} | 
+                            Nodes: {solverProgress.nodesExplored.toLocaleString()} | 
+                            Time: {(solverProgress.timeElapsed / 1000).toFixed(1)}s
+                          </>
+                        )}
                       </div>
                     </div>
                   )}

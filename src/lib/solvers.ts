@@ -2,6 +2,9 @@
 import { CubeState, Move, MOVES, applyMove, isSolved, cubeToString, cloneCube } from './cube';
 import { manhattanDistanceHeuristic, patternDatabaseHeuristic } from './heuristics';
 
+// Re-export Kociemba algorithm
+export { solveWithKociemba } from './kociemba';
+
 export interface SolverResult {
   solution: Move[];
   nodesExplored: number;
