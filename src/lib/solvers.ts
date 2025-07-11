@@ -21,7 +21,7 @@ export interface SolverProgress {
 // IDA* (Iterative Deepening A*) - Korf's algorithm
 export async function solveWithIDA(
   cube: CubeState,
-  maxDepth: number = 20,
+  maxDepth: number = 12,
   onProgress?: (progress: SolverProgress) => void
 ): Promise<SolverResult> {
   const startTime = Date.now();
@@ -120,7 +120,7 @@ export async function solveWithIDA(
 // Breadth-First Search
 export async function solveWithBFS(
   cube: CubeState,
-  maxDepth: number = 12,
+  maxDepth: number = 8,
   onProgress?: (progress: SolverProgress) => void
 ): Promise<SolverResult> {
   const startTime = Date.now();
@@ -196,7 +196,7 @@ export async function solveWithBFS(
 // Depth-First Search with iterative deepening
 export async function solveWithDFS(
   cube: CubeState,
-  maxDepth: number = 15,
+  maxDepth: number = 10,
   onProgress?: (progress: SolverProgress) => void
 ): Promise<SolverResult> {
   const startTime = Date.now();
