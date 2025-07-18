@@ -31,71 +31,103 @@ export async function solveWithKociemba(
   };
 }
 
-// Efficient heuristic-guided search (A*-like)
+// Fast iterative deepening search with aggressive pruning
 async function heuristicGuidedSearch(
   cube: CubeState,
   maxDepth: number,
   onProgress: (nodes: number, depth: number) => void
 ): Promise<{ solution: Move[]; found: boolean }> {
-  interface SearchNode {
-    cube: CubeState;
-    path: Move[];
-    g: number; // depth
-    f: number; // g + heuristic
-  }
-
-  const frontier: SearchNode[] = [];
-  const visited = new Set<string>();
   let nodesExplored = 0;
-
-  // Initialize
-  const startHeuristic = manhattanDistanceHeuristic(cube);
-  frontier.push({ cube, path: [], g: 0, f: startHeuristic });
-
-  while (frontier.length > 0) {
-    // Sort by f-score (best first)
-    frontier.sort((a, b) => a.f - b.f);
-    const current = frontier.shift()!;
+  
+  // Try iterative deepening with very aggressive limits
+  for (let depth = 1; depth <= Math.min(maxDepth, 8); depth++) {
+    const result = await depthLimitedSearch(cube, depth, onProgress, nodesExplored);
+    nodesExplored += result.nodesExplored;
     
-    nodesExplored++;
+    if (result.found) {
+      return { solution: result.solution, found: true };
+    }
     
-    if (nodesExplored % 200 === 0) {
-      onProgress(200, current.g);
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-
-    const cubeKey = cubeToString(current.cube);
-    if (visited.has(cubeKey)) continue;
-    visited.add(cubeKey);
-
-    if (isSolved(current.cube)) {
-      return { solution: current.path, found: true };
-    }
-
-    if (current.g >= maxDepth) continue;
-
-    // Expand neighbors
-    for (const move of MOVES) {
-      if (current.path.length > 0 && isRedundantMove(current.path[current.path.length - 1], move)) {
-        continue;
-      }
-
-      const newCube = applyMove(current.cube, move);
-      const newPath = [...current.path, move];
-      const newG = current.g + 1;
-      const newH = manhattanDistanceHeuristic(newCube);
-      const newF = newG + newH;
-
-      frontier.push({
-        cube: newCube,
-        path: newPath,
-        g: newG,
-        f: newF
-      });
+    // Early exit if we've explored too many nodes
+    if (nodesExplored > 5000) {
+      break;
     }
   }
 
   return { solution: [], found: false };
+}
+
+// Depth-limited search with beam search optimization
+async function depthLimitedSearch(
+  cube: CubeState,
+  maxDepth: number,
+  onProgress: (nodes: number, depth: number) => void,
+  initialNodes: number
+): Promise<{ solution: Move[]; found: boolean; nodesExplored: number }> {
+  interface SearchNode {
+    cube: CubeState;
+    path: Move[];
+    heuristic: number;
+  }
+
+  let currentLevel: SearchNode[] = [{ cube, path: [], heuristic: manhattanDistanceHeuristic(cube) }];
+  let nodesExplored = 0;
+  const visited = new Set<string>();
+  const MAX_BEAM_WIDTH = 100; // Limit beam width for performance
+
+  for (let depth = 0; depth < maxDepth; depth++) {
+    const nextLevel: SearchNode[] = [];
+    
+    // Sort current level by heuristic (best first)
+    currentLevel.sort((a, b) => a.heuristic - b.heuristic);
+    
+    // Beam search: only keep the best nodes
+    currentLevel = currentLevel.slice(0, MAX_BEAM_WIDTH);
+    
+    for (const node of currentLevel) {
+      nodesExplored++;
+      
+      if (nodesExplored % 100 === 0) {
+        onProgress(100, depth);
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      const cubeKey = cubeToString(node.cube);
+      if (visited.has(cubeKey)) continue;
+      visited.add(cubeKey);
+
+      if (isSolved(node.cube)) {
+        return { solution: node.path, found: true, nodesExplored };
+      }
+
+      // Expand neighbors
+      for (const move of MOVES) {
+        if (node.path.length > 0 && isRedundantMove(node.path[node.path.length - 1], move)) {
+          continue;
+        }
+
+        const newCube = applyMove(node.cube, move);
+        const newPath = [...node.path, move];
+        const newHeuristic = manhattanDistanceHeuristic(newCube);
+        
+        // Aggressive pruning: skip if heuristic is too high
+        if (newHeuristic > maxDepth - depth - 1) continue;
+
+        nextLevel.push({
+          cube: newCube,
+          path: newPath,
+          heuristic: newHeuristic
+        });
+      }
+    }
+    
+    currentLevel = nextLevel;
+    
+    // Early exit if no more nodes to explore
+    if (currentLevel.length === 0) break;
+  }
+
+  return { solution: [], found: false, nodesExplored };
 }
 
 // Helper function to avoid redundant moves (same as other algorithms)
