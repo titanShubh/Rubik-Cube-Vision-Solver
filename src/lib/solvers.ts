@@ -4,6 +4,7 @@ import { manhattanDistanceHeuristic, patternDatabaseHeuristic } from './heuristi
 
 // Re-export Kociemba algorithm
 export { solveWithKociemba } from './kociemba';
+export { solveWithAdvancedKociemba } from './advanced-kociemba';
 
 export interface SolverResult {
   solution: Move[];

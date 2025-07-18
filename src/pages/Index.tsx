@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, RotateCcw, Play, Zap, Brain, Search, TreePine } from 'lucide-react';
 import { CubeViewer } from '@/components/CubeViewer';
 import { SolutionSteps } from '@/components/SolutionSteps';
-import { solveWithIDA, solveWithBFS, solveWithDFS, generateScrambledCube, SolverProgress, solveWithKociemba } from '@/lib/solvers';
+import { solveWithIDA, solveWithBFS, solveWithDFS, generateScrambledCube, SolverProgress, solveWithKociemba, solveWithAdvancedKociemba } from '@/lib/solvers';
 import { CubeState, Move } from '@/lib/cube';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Cpu } from 'lucide-react';
@@ -20,7 +20,7 @@ interface SolutionStep {
 }
 
 type AppState = 'capture' | 'analyze' | 'solve' | 'complete';
-type SolverType = 'ida' | 'bfs' | 'dfs' | 'kociemba';
+type SolverType = 'ida' | 'bfs' | 'dfs' | 'kociemba' | 'advanced-kociemba';
 
 interface KociembaProgress {
   currentPhase: number;
@@ -104,6 +104,9 @@ export default function Index() {
           break;
         case 'kociemba':
           result = await solveWithKociemba(cubeState, 24, onProgress as (progress: KociembaProgress) => void);
+          break;
+        case 'advanced-kociemba':
+          result = await solveWithAdvancedKociemba(cubeState, 20, onProgress as (progress: KociembaProgress) => void);
           break;
       }
 
@@ -262,6 +265,12 @@ export default function Index() {
                           <div className="flex items-center gap-2">
                             <Cpu size={16} />
                             Kociemba (Two-Phase)
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="advanced-kociemba">
+                          <div className="flex items-center gap-2">
+                            <Cpu size={16} />
+                            Advanced Kociemba (IDA*)
                           </div>
                         </SelectItem>
                         <SelectItem value="ida">
